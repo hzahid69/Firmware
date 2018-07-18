@@ -245,6 +245,9 @@
  */
 #if defined(BOARD_USES_PX4IO_VERSION)
 #  define BOARD_USES_PX4IO	1
+#  if defined(BOARD_HAS_STATIC_MANIFEST) && BOARD_HAS_STATIC_MANIFEST == 1
+#     define PX4_MFT_HW_SUPPORTED_PX4_MFT_PX4IO 1
+#  endif
 /*  Allow a board_config to override the PX4IO FW search paths */
 #  if defined(BOARD_PX4IO_FW_SEARCH_PATHS)
 #    define PX4IO_FW_SEARCH_PATHS BOARD_PX4IO_FW_SEARCH_PATHS
@@ -648,22 +651,30 @@ typedef const px4_hw_mft_item_t  *px4_hw_mft_item;
 #define px4_hw_mft_uninitialized (px4_hw_mft_item) -1
 #define px4_hw_mft_unsupported   (px4_hw_mft_item) 0
 
-#if defined(BOARD_HAS_VERSIONING) && !defined(BOARD_HAS_SIMPLE_HW_VERSIONING)
+#if defined(BOARD_HAS_VERSIONING)
 __EXPORT px4_hw_mft_item board_query_manifest(px4_hw_mft_item_id_t id);
 
-#define PX4_MFT_HW_SUPPORTED(ID)           (board_query_manifest((ID))->present)
-#define PX4_MFT_HW_REQUIRED(ID)            (board_query_manifest((ID))->mandatory)
-#define PX4_MFT_HW_IS_ONBOARD(ID)          (board_query_manifest((ID))->connection == px4_hw_con_onboard)
-#define PX4_MFT_HW_IS_OFFBOARD(ID)         (board_query_manifest((ID))->connection == px4_hw_con_conector)
-#define PX4_MFT_HW_IS_CONNECTION_KNOWN(ID) (board_query_manifest((ID))->connection != px4_hw_con_unknown)
-
+#  define PX4_MFT_HW_SUPPORTED(ID)           (board_query_manifest((ID))->present)
+#  define PX4_MFT_HW_REQUIRED(ID)            (board_query_manifest((ID))->mandatory)
+#  define PX4_MFT_HW_IS_ONBOARD(ID)          (board_query_manifest((ID))->connection == px4_hw_con_onboard)
+#  define PX4_MFT_HW_IS_OFFBOARD(ID)         (board_query_manifest((ID))->connection == px4_hw_con_conector)
+#  define PX4_MFT_HW_IS_CONNECTION_KNOWN(ID) (board_query_manifest((ID))->connection != px4_hw_con_unknown)
+#elif defined(BOARD_HAS_STATIC_MANIFEST) && BOARD_HAS_STATIC_MANIFEST == 1
+/* Board has a static configuration and will supply what it has */
+#  define PX4_MFT_HW_SUPPORTED(ID)           PX4_MFT_HW_SUPPORTED_##ID
+#  define PX4_MFT_HW_REQUIRED(ID)            PX4_MFT_HW_REQUIRED_##ID
+#  define PX4_MFT_HW_IS_ONBOARD(ID)          PX4_MFT_HW_IS_ONBOARD_##ID
+#  define PX4_MFT_HW_IS_OFFBOARD(ID)         PX4_MFT_HW_IS_OFFBOARD_##ID
+#  define PX4_MFT_HW_IS_CONNECTION_KNOWN(ID) PX4_MFT_HW_IS_CONNECTION_KNOWN_##ID
+#  define board_query_manifest(_na)          px4_hw_mft_unsupported
 #else
-#define PX4_MFT_HW_SUPPORTED(ID)           (1)
-#define PX4_MFT_HW_REQUIRED(ID)            (0)
-#define PX4_MFT_HW_IS_ONBOARD(ID)          (0)
-#define PX4_MFT_HW_IS_OFFBOARD(ID)         (0)
-#define PX4_MFT_HW_IS_CONNECTION_KNOWN(ID) (0)
-#define board_query_manifest(_na)          px4_hw_mft_unsupported
+/* Default are Not Supported */
+#  define PX4_MFT_HW_SUPPORTED(ID)           (0)
+#  define PX4_MFT_HW_REQUIRED(ID)            (0)
+#  define PX4_MFT_HW_IS_ONBOARD(ID)          (0)
+#  define PX4_MFT_HW_IS_OFFBOARD(ID)         (0)
+#  define PX4_MFT_HW_IS_CONNECTION_KNOWN(ID) (0)
+#  define board_query_manifest(_na)          px4_hw_mft_unsupported
 #endif
 
 /************************************************************************************
